@@ -70,13 +70,6 @@ func main() {
 
 func runEagerLoad(db *gorm.DB) {
 	start := time.Now()
-
-	dsn := "root:password@tcp(localhost:3306)/gorm?charset=utf8mb4&parseTime=True&loc=Local"
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
-	if err != nil {
-		log.Fatal("failed to connect database")
-	}
-
 	// Update the Job struct to include relationships
 	type Job struct {
 		UUID       string  `gorm:"primaryKey;type:char(36)"`
