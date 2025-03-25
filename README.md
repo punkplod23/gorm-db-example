@@ -23,7 +23,8 @@ This project demonstrates various ways to interact with a database using GORM in
 
 1. Clone the repository:
     ```sh
-    git clone https://github.com/yourusername/gorm-db-example.git
+    git clone
+https://github.com/punkplod23/gorm-db-example.git
     cd gorm-db-example
     ```
 
