@@ -17,6 +17,7 @@ This project demonstrates various ways to interact with a database using GORM in
 - `-join`: Run the join example.
 - `-lazy`: Run the lazy loading example.
 - `-json`: Run the JSON aggregate example.
+- `-all`: Run all examples and print metrics.
 
 ## How to Execute
 
@@ -34,6 +35,12 @@ This project demonstrates various ways to interact with a database using GORM in
     go run . -join
     go run . -lazy
     go run . -json
+    go run . -all
+    ```
+
+4. Alternatively, you can use Docker Compose to set up the environment and run the full experiment:
+    ```sh
+    docker-compose up --build
     ```
 
 ## Examples
@@ -60,6 +67,12 @@ go run . -lazy
 Run the JSON aggregate example:
 ```sh
 go run . -json
+```
+
+### All Examples
+Run all examples and print metrics:
+```sh
+go run . -all
 ```
 
 ## Load Database SQL

@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -46,13 +47,35 @@ func main() {
 	join := flag.Bool("join", false, "Run join example")
 	lazyLoad := flag.Bool("lazy", false, "Run lazy loading example")
 	jsonAggregate := flag.Bool("json", false, "Run JSON aggregate example")
+	all := flag.Bool("all", false, "Run all examples and print metrics")
 
 	flag.Parse()
 
-	dsn := "root:password@tcp(localhost:3306)/gorm?charset=utf8mb4&parseTime=True&loc=Local"
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	// Get database connection details from environment variables
+	dbHost := getEnv("DB_HOST", "db")
+	dbPort := getEnv("DB_PORT", "3306")
+	dbUser := getEnv("DB_USER", "root")
+	dbPass := getEnv("DB_PASSWORD", "password")
+	dbName := getEnv("DB_NAME", "gorm")
+
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True",
+		dbUser, dbPass, dbHost, dbPort, dbName)
+
+	// Add retry logic with better error handling
+	var db *gorm.DB
+	var err error
+	maxRetries := 30 // Increase retries
+	for i := 0; i < maxRetries; i++ {
+		db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+		if err == nil {
+			log.Printf("Successfully connected to database")
+			break
+		}
+		log.Printf("Failed to connect to database (attempt %d/%d): %v", i+1, maxRetries, err)
+		time.Sleep(2 * time.Second)
+	}
 	if err != nil {
-		log.Fatal("failed to connect database")
+		log.Fatal("failed to connect database after retries:", err)
 	}
 
 	if *eagerLoad {
@@ -63,9 +86,20 @@ func main() {
 		runLazyLoad(db)
 	} else if *jsonAggregate {
 		runJsonAggregate(db)
+	} else if *all {
+		runAllExamples(db)
 	} else {
-		log.Println("Please provide a valid flag: -migrate, -eager, -join, -lazy, -json")
+		runAllExamples(db)
 	}
+}
+
+// Helper function to get environment variables with default values
+func getEnv(key, defaultValue string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		return defaultValue
+	}
+	return value
 }
 
 func runEagerLoad(db *gorm.DB) {
@@ -242,4 +276,27 @@ func runJsonAggregate(db *gorm.DB) {
 
 	elapsed := time.Since(start)
 	log.Printf("runJsonAggregate took %s", elapsed)
+}
+
+func runAllExamples(db *gorm.DB) {
+	start := time.Now()
+	runEagerLoad(db)
+	eagerLoadTime := time.Since(start)
+
+	start = time.Now()
+	runJoin(db)
+	joinTime := time.Since(start)
+
+	start = time.Now()
+	runLazyLoad(db)
+	lazyLoadTime := time.Since(start)
+
+	start = time.Now()
+	runJsonAggregate(db)
+	jsonAggregateTime := time.Since(start)
+
+	log.Printf("Eager Loading took %s", eagerLoadTime)
+	log.Printf("Join took %s", joinTime)
+	log.Printf("Lazy Loading took %s", lazyLoadTime)
+	log.Printf("JSON Aggregate took %s", jsonAggregateTime)
 }
